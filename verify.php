@@ -4,6 +4,17 @@ require_once __DIR__ . '/includes/functions.php';
 $pageTitle = 'QR Verification';
 $result = null;
 $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
+$saleId = (int) ($_GET['sale'] ?? 0);
+
+if ($token === '' && $saleId > 0) {
+    // Resolve a sale ID to its most recent QR token (used by the Transactions "Verify" link)
+    $stmt = getDB()->prepare('SELECT token FROM qr_tokens WHERE sale_id = ? ORDER BY token_id DESC LIMIT 1');
+    $stmt->execute([$saleId]);
+    $row = $stmt->fetch();
+    if ($row) {
+        $token = $row['token'];
+    }
+}
 
 if ($token !== '') {
     $stmt = getDB()->prepare(

@@ -19,7 +19,17 @@ if (!$book || (int) $book['seller_id'] !== $sellerId) {
 $pageTitle = 'Edit Book';
 $errors = [];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCsrf()) {
+    $errors[] = 'Invalid or expired form submission. Please try again.';
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_book'])) {
+    deleteBook($bookId);
+    setFlash('success', 'Listing deleted.');
+    redirect('dashboard.php');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_book'])) {
     $name = trim($_POST['name'] ?? '');
     $author = trim($_POST['author'] ?? '');
     $courseCode = strtoupper(trim($_POST['course_code'] ?? ''));
@@ -28,6 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rentalPrice = $_POST['rental_price_per_day'] !== '' ? (float) $_POST['rental_price_per_day'] : null;
     $description = trim($_POST['description'] ?? '');
     $condition = trim($_POST['condition_note'] ?? 'Good');
+    $coverImage = $book['cover_image'] ?? null;
+
+    if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $uploaded = handleImageUpload($_FILES['cover_image']);
+        if ($uploaded === false) {
+            $errors[] = 'Cover image must be a JPG, PNG, GIF or WebP file under 2MB.';
+        } elseif ($uploaded !== null) {
+            $coverImage = $uploaded;
+        }
+    }
 
     if ($name === '' || $author === '' || $courseCode === '' || $price <= 0) {
         $errors[] = 'Please fill in all required fields with valid values.';
@@ -36,9 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $stmt = getDB()->prepare(
             'UPDATE books SET name=?, author=?, course_code=?, price=?, listing_type=?, rental_price_per_day=?,
-             description=?, condition_note=? WHERE book_id=? AND seller_id=?'
+             description=?, condition_note=?, cover_image=? WHERE book_id=? AND seller_id=?'
         );
-        $stmt->execute([$name, $author, $courseCode, $price, $listingType, $rentalPrice, $description, $condition, $bookId, $sellerId]);
+        $stmt->execute([$name, $author, $courseCode, $price, $listingType, $rentalPrice, $description, $condition, $coverImage, $bookId, $sellerId]);
         setFlash('success', 'Book updated successfully.');
         redirect('view.php?id=' . $bookId);
     }
@@ -53,6 +73,7 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="card auth-card mx-0" style="max-width: 600px;">
     <div class="card-body p-4">
         <form method="post">
+            <?= csrfField() ?>
             <div class="mb-3">
                 <label class="form-label">Book Title</label>
                 <input type="text" name="name" class="form-control" required value="<?= e($_POST['name'] ?? $book['name']) ?>">
@@ -92,10 +113,22 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="mb-3" id="rentalField">
                 <label class="form-label">Rental Price per Day (KES)</label>
                 <input type="number" name="rental_price_per_day" class="form-control" step="0.01" min="0.01"
-                       value="<?= e($book['rental_price_per_day'] ?? '') ?>">
+                        value="<?= e($book['rental_price_per_day'] ?? '') ?>">
+            </div>
+            <?php if (!empty($book['cover_image'])): ?>
+                <div class="mb-3">
+                    <label class="form-label">Current Cover</label><br>
+                    <img src="<?= e(APP_URL . '/assets/uploads/' . $book['cover_image']) ?>" alt="cover" style="max-height:120px;" class="img-thumbnail">
+                </div>
+            <?php endif; ?>
+            <div class="mb-3">
+                <label class="form-label">Cover Image (optional)</label>
+                <input type="file" name="cover_image" class="form-control" accept="image/*">
             </div>
             <button type="submit" class="btn btn-primary">Save Changes</button>
             <a href="view.php?id=<?= $bookId ?>" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" name="delete_book" value="1" class="btn btn-outline-danger float-end"
+                    onclick="return confirm('Delete this listing permanently?')">Delete Listing</button>
         </form>
     </div>
 </div>

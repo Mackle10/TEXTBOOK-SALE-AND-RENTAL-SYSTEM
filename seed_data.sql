@@ -3,9 +3,9 @@
 
 USE `textbooks`;
 
-INSERT INTO `users` (`role`, `phone`, `email`, `password`) VALUES
-('Seller', '0712345678', 'mark@university.ac.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
-('Buyer', '0723456789', 'jane@university.ac.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
+INSERT INTO `users` (`role`, `phone`, `email`, `password`, `email_verified`) VALUES
+('Seller', '0712345678', 'mark@university.ac.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+('Buyer', '0723456789', 'jane@university.ac.ke', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1);
 
 INSERT INTO `students` (`user_id`, `course`, `year_of_study`, `first_name`, `last_name`) VALUES
 (1, 'Computer Science', 3, 'Mark', 'Muwando'),

@@ -289,7 +289,4 @@ if ($user['role'] === 'Seller') {
 </div>
 <?php endif; ?>
 
-    </div> <!-- .col-md-9 -->
-</div> <!-- .row -->
-
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

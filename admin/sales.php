@@ -2,11 +2,13 @@
 require_once __DIR__ . '/../includes/admin_header.php';
 
 $db = getDB();
-$sales = $db->query(
+$total = (int) $db->query('SELECT COUNT(*) FROM sales')->fetchColumn();
+$meta = paginationMeta($total);
+$sales = $db->prepare(
     'SELECT s.*, p.amount_paid, p.payment_status, p.payment_method AS pay_method, p.reference_no
      FROM sales s
      LEFT JOIN payments p ON p.sale_id = s.sale_id
-     ORDER BY s.sale_id DESC'
+     ORDER BY s.sale_id DESC LIMIT ' . (int) $meta['perPage'] . ' OFFSET ' . (int) $meta['offset']
 )->fetchAll();
 $pageTitle = 'Sales & Payments';
 ?>
@@ -36,7 +38,10 @@ $pageTitle = 'Sales & Payments';
             </tr>
             <?php endforeach; ?>
         </tbody>
-    </table>
+        </table>
+    </div>
 </div>
+
+<?= renderPager('sales.php', $meta['totalPages'], $meta['page']) ?>
 
 <?php require_once __DIR__ . '/../includes/admin_footer.php'; ?>

@@ -8,12 +8,16 @@ $db = getDB();
 $pageTitle = 'Notifications';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_read'])) {
-    $db->prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ?')->execute([$user['user_id']]);
-    setFlash('success', 'All notifications marked as read.');
+    if (validateCsrf()) {
+        $db->prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ?')->execute([$user['user_id']]);
+        setFlash('success', 'All notifications marked as read.');
+    } else {
+        setFlash('error', 'Invalid request.');
+    }
     redirect('notifications.php');
 }
 
-if (isset($_GET['read'])) {
+if (isset($_GET['read']) && validateCsrf()) {
     $nid = (int) $_GET['read'];
     $db->prepare('UPDATE notifications SET is_read = 1 WHERE notification_id = ? AND user_id = ?')->execute([$nid, $user['user_id']]);
 }
@@ -31,11 +35,12 @@ require_once __DIR__ . '/includes/header.php';
 
 <?php if ($notifications): ?>
 <form method="post" class="mb-3">
+    <?= csrfField() ?>
     <button type="submit" name="mark_read" class="btn btn-sm btn-outline-secondary">Mark all as read</button>
 </form>
 <div class="list-group">
     <?php foreach ($notifications as $n): ?>
-        <a href="<?= $n['link'] ? APP_URL . '/' . e($n['link']) . (str_contains($n['link'], '?') ? '&' : '?') . 'read=' . $n['notification_id'] : '#' ?>"
+        <a href="<?= $n['link'] ? e(APP_URL . '/' . $n['link'] . (str_contains($n['link'], '?') ? '&' : '?') . 'read=' . $n['notification_id'] . '&csrf=' . urlencode(csrfToken())) : '#' ?>"
            class="list-group-item list-group-item-action <?= $n['is_read'] ? '' : 'list-group-item-primary' ?>">
             <div class="d-flex justify-content-between">
                 <span><?= e($n['message']) ?></span>

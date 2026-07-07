@@ -44,6 +44,8 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         runSqlFile($pdo, __DIR__ . '/textbooks.sql', 'textbooks.sql');
         runSqlFile($pdo, __DIR__ . '/schema_extensions.sql', 'schema_extensions.sql');
+        runSqlFile($pdo, __DIR__ . '/schema_extensions_v2.sql', 'schema_extensions_v2.sql');
+        runSqlFile($pdo, __DIR__ . '/schema_v3.sql', 'schema_v3.sql');
         if (!empty($_POST['seed'])) {
             runSqlFile($pdo, __DIR__ . '/seed_data.sql', 'seed_data.sql');
         }

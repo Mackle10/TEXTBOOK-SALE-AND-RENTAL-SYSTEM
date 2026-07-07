@@ -13,7 +13,31 @@ $pageTitle = $book['name'];
 $isAvailable = $book['book_status'] === 'available';
 $user = currentUser();
 
-require_once __DIR__ . '/../includes/header.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
+    if (!isLoggedIn()) {
+        redirect('login.php');
+    }
+    if (!validateCsrf()) {
+        setFlash('error', 'Invalid request.');
+    } else {
+        $rating = (int) ($_POST['rating'] ?? 0);
+        $comment = trim($_POST['comment'] ?? '');
+        if ($rating < 1 || $rating > 5) {
+            setFlash('error', 'Please choose a rating between 1 and 5.');
+        } else {
+            addReview($bookId, (int) $user['user_id'], $rating, $comment);
+            setFlash('success', 'Thanks for your review!');
+        }
+    }
+    redirect('books/view.php?id=' . $bookId);
+}
+
+$avgRating = averageRating($bookId);
+$reviews = getReviews($bookId);
+$sellerUserId = !empty($book['seller_id']) ? getUserIdBySellerId((int) $book['seller_id']) : null;
+$canReview = isLoggedIn() && $user && $sellerUserId && $sellerUserId !== (int) $user['user_id'];
+
+require_once __DIR__ . '/../includes/header.php'; ?>
 ?>
 
 <?php if ($msg = flash('error')): ?>
@@ -23,8 +47,11 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="row g-4">
     <div class="col-lg-8">
         <div class="card book-card">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="card-body p-4">
+            <?php if (!empty($book['cover_image'])): ?>
+                <img src="<?= e(APP_URL . '/assets/uploads/' . $book['cover_image']) ?>" alt="Cover of <?= e($book['name']) ?>" class="img-fluid rounded mb-3" style="max-height:340px;">
+            <?php endif; ?>
+            <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <span class="badge bg-primary mb-2"><?= e($book['course_code']) ?></span>
                         <h1 class="h3"><?= e($book['name']) ?></h1>
@@ -71,11 +98,20 @@ require_once __DIR__ . '/../includes/header.php';
                             </a>
                         <?php endif; ?>
                     <?php elseif (!$isAvailable && isLoggedIn()): ?>
-                        <a href="../waitlist/join.php?book_id=<?= $bookId ?>" class="btn btn-warning">
+                        <a href="../waitlist/join.php?book_id=<?= $bookId ?>&csrf=<?= urlencode(csrfToken()) ?>" class="btn btn-warning">
                             <i class="bi bi-hourglass-split"></i> Join Waitlist
                         </a>
                     <?php elseif (!isLoggedIn()): ?>
                         <a href="../login.php" class="btn btn-primary">Login to Purchase</a>
+                    <?php endif; ?>
+                    <?php
+                    $sellerUserId = !empty($book['seller_id']) ? getUserIdBySellerId((int) $book['seller_id']) : null;
+                    $canMessage = isLoggedIn() && $user && $sellerUserId && $sellerUserId !== (int) $user['user_id'];
+                    ?>
+                    <?php if ($canMessage): ?>
+                        <a href="messages/send.php?book_id=<?= $bookId ?>" class="btn btn-outline-secondary">
+                            <i class="bi bi-chat-dots"></i> Message Seller
+                        </a>
                     <?php endif; ?>
                     <a href="index.php" class="btn btn-outline-secondary">Back to Browse</a>
                 </div>
@@ -89,6 +125,59 @@ require_once __DIR__ . '/../includes/header.php';
                 This book is tagged for <strong><?= e($book['course_code']) ?></strong>.
                 Students enrolled in this course can find it directly from the syllabus search.
             </p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-8">
+        <div class="card book-card">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3"><i class="bi bi-star-fill text-warning"></i> Reviews
+                    <?php if ($avgRating !== null): ?>
+                        <span class="badge bg-warning text-dark"><?= $avgRating ?> / 5</span>
+                        <small class="text-muted">(<?= count($reviews) ?>)</small>
+                    <?php else: ?>
+                        <small class="text-muted">No reviews yet</small>
+                    <?php endif; ?>
+                </h2>
+
+                <?php if ($canReview): ?>
+                    <form method="post" class="mb-4 p-3 bg-light rounded">
+                        <?= csrfField() ?>
+                        <div class="mb-2">
+                            <label class="form-label">Your rating</label>
+                            <select name="rating" class="form-select" style="max-width:160px;" required>
+                                <option value="">Choose…</option>
+                                <?php foreach ([5,4,3,2,1] as $r): ?>
+                                    <option value="<?= $r ?>"><?= $r ?> ★</option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <textarea name="comment" class="form-control" rows="2" placeholder="Share your experience (optional)"></textarea>
+                        </div>
+                        <button type="submit" name="submit_review" value="1" class="btn btn-primary btn-sm">Submit Review</button>
+                    </form>
+                <?php elseif (isLoggedIn()): ?>
+                    <p class="small text-muted">You cannot review your own listing.</p>
+                <?php else: ?>
+                    <p class="small text-muted"><a href="../login.php">Log in</a> to write a review.</p>
+                <?php endif; ?>
+
+                <?php if ($reviews): ?>
+                    <ul class="list-unstyled mb-0">
+                        <?php foreach ($reviews as $rv): ?>
+                            <li class="border-top pt-2 mt-2">
+                                <strong><?= e(trim(($rv['other_name'] ?? '') ?: $rv['email'])) ?></strong>
+                                <span class="text-warning"><?= str_repeat('★', (int) $rv['rating']) ?><?= str_repeat('☆', 5 - (int) $rv['rating']) ?></span>
+                                <small class="text-muted"><?= e(date('M j', strtotime($rv['created_at']))) ?></small>
+                                <?php if ($rv['comment']): ?><p class="mb-1 small"><?= nl2br(e($rv['comment'])) ?></p><?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>

@@ -5,15 +5,22 @@ A peer-to-peer campus marketplace for buying, selling, and renting textbooks. Bu
 ## Features
 
 | Requirement | Implementation |
-|---|---|
+| --- | --- |
 | User authentication | University email registration & login (`users` table) |
-| Upload section | Sellers upload books with course codes |
-| Course code matching | Browse and filter by course code |
+| Email verification | Verify link/token on register + resend from profile (dev: link shown on screen) |
+| Password reset | Forgot/reset flow with time-limited tokens (`password_resets`) |
+| Upload section | Sellers upload books with course codes **and cover images** |
+| Course code matching | Browse and filter by course code (paginated) |
 | Payment method | Cash, Mobile Money, Debit Card (`payments` table) |
-| Realtime status tracker | Live polling for available / reserved / sold / rented |
+| Realtime status tracker | Live polling for available / reserved / sold / rented (`assets/js/app.js`) |
 | Waitlist queue | Join waitlist when books are unavailable |
 | QR Code verification | QR tokens generated on each transaction |
 | Rental timer | Duration picker, return date calculation, reminders |
+| Messaging | In-app "Message Seller" conversations (`messages`) |
+| Reviews & ratings | Star ratings + comments per book (`reviews`) |
+| Seller summary | Earnings, completed deals, active listings on dashboard |
+| Delete listings | Sellers delete own books; admin deletes books/users |
+| CSRF protection | Synchronizer-token on all forms and state-changing actions |
 
 ## Setup (XAMPP)
 
@@ -25,13 +32,19 @@ A peer-to-peer campus marketplace for buying, selling, and renting textbooks. Bu
    - Import **`schema_extensions.sql`**
    - Import **`seed_data.sql`** (optional sample data)
 
-   Or via command line:
-   ```bash
-   mysql -u root -e "CREATE DATABASE IF NOT EXISTS textbooks;"
-   mysql -u root textbooks < textbooks.sql
-   mysql -u root textbooks < schema_extensions.sql
-   mysql -u root textbooks < seed_data.sql
-   ```
+    Or via command line:
+    ```bash
+    mysql -u root -e "CREATE DATABASE IF NOT EXISTS textbooks;"
+    mysql -u root textbooks < textbooks.sql
+    mysql -u root textbooks < schema_extensions.sql
+    mysql -u root textbooks < schema_extensions_v2.sql
+    mysql -u root textbooks < schema_v3.sql
+    mysql -u root textbooks < seed_data.sql
+    ```
+
+    > **Existing database?** If you already imported the earlier schema, just run
+    > `schema_v3.sql` (and `schema_extensions_v2.sql` if missing) to add cover
+    > images, email verification, password resets, reviews, and messaging.
 
 3. **Configure** — edit `config/config.php` if needed:
    - `UNIVERSITY_EMAIL_DOMAIN` — your institution's email domain (default: `university.ac.ke`)

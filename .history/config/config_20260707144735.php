@@ -12,7 +12,7 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 
 // Restrict registration to university email domain (change to your institution)
-define('UNIVERSITY_EMAIL_DOMAIN', 'students.mak.ac.ug');
+define('UNIVERSITY_EMAIL_DOMAIN', 'university.ac.ke');
 
 define('RENTAL_REMINDER_DAYS', 3);
 

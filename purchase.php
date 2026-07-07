@@ -30,6 +30,9 @@ $pageTitle = $type === 'rent' ? 'Rent Book' : 'Purchase Book';
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCsrf()) {
+        $errors[] = 'Invalid or expired form submission. Please try again.';
+    }
     $paymentMethod = $_POST['payment_method'] ?? '';
     $location = trim($_POST['location'] ?? 'Campus');
     $referenceNo = trim($_POST['reference_no'] ?? '');
@@ -136,6 +139,7 @@ require_once __DIR__ . '/includes/header.php';
     <div class="col-lg-7">
         <div class="card p-4">
             <form method="post">
+                <?= csrfField() ?>
                 <?php if ($type === 'rent'): ?>
                     <div class="mb-3">
                         <label class="form-label">Rental Duration (days)</label>

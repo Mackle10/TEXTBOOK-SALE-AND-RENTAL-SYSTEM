@@ -6,20 +6,29 @@ $courseCode = strtoupper(trim($_GET['course'] ?? ''));
 $search = trim($_GET['q'] ?? '');
 
 $db = getDB();
-$sql = 'SELECT b.*, s.name AS seller_name FROM books b LEFT JOIN sellers s ON b.seller_id = s.seller_id WHERE b.status = \'Active\'';
+$where = ' WHERE b.status = \'Active\'';
 $params = [];
 
 if ($courseCode !== '') {
-    $sql .= ' AND b.course_code LIKE ?';
+    $where .= ' AND b.course_code LIKE ?';
     $params[] = $courseCode . '%';
 }
 if ($search !== '') {
-    $sql .= ' AND (b.name LIKE ? OR b.author LIKE ? OR b.course_code LIKE ?)';
+    $where .= ' AND (b.name LIKE ? OR b.author LIKE ? OR b.course_code LIKE ?)';
     $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
-$sql .= ' ORDER BY b.book_status = \'available\' DESC, b.course_code, b.name';
+
+$countStmt = $db->prepare('SELECT COUNT(*) FROM books b LEFT JOIN sellers s ON b.seller_id = s.seller_id ' . $where);
+$countStmt->execute($params);
+$total = (int) $countStmt->fetchColumn();
+
+$meta = paginationMeta($total);
+$sql = 'SELECT b.*, s.name AS seller_name FROM books b LEFT JOIN sellers s ON b.seller_id = s.seller_id '
+     . $where
+     . ' ORDER BY b.book_status = \'available\' DESC, b.course_code, b.name'
+     . ' LIMIT ' . (int) $meta['perPage'] . ' OFFSET ' . (int) $meta['offset'];
 
 $stmt = $db->prepare($sql);
 $stmt->execute($params);
@@ -32,7 +41,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h1 class="h3 mb-0">Browse Textbooks</h1>
-    <span class="text-muted"><?= count($books) ?> result(s)</span>
+    <span class="text-muted"><?= $total ?> result(s)</span>
 </div>
 
 <form method="get" class="row g-2 mb-4">
@@ -68,6 +77,9 @@ require_once __DIR__ . '/../includes/header.php';
                         <span data-book-status-id="<?= (int) $book['book_id'] ?>"><?= statusBadge($book['book_status']) ?></span>
                     </div>
                     <div class="card-body">
+                        <?php if (!empty($book['cover_image'])): ?>
+                            <img src="<?= e(APP_URL . '/assets/uploads/' . $book['cover_image']) ?>" alt="cover" class="img-fluid rounded mb-2" style="max-height:160px; width:100%; object-fit:cover;">
+                        <?php endif; ?>
                         <h2 class="h6 card-title"><?= e($book['name']) ?></h2>
                         <p class="small text-muted mb-2"><?= e($book['author']) ?></p>
                         <?php if ($book['seller_name']): ?>
@@ -84,5 +96,7 @@ require_once __DIR__ . '/../includes/header.php';
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
+
+<?= renderPager('index.php', $meta['totalPages'], $meta['page']) ?>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

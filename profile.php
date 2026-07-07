@@ -12,6 +12,9 @@ $stmt->execute([$user['user_id']]);
 $profile = $stmt->fetch();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCsrf()) {
+        $errors[] = 'Invalid or expired form submission. Please try again.';
+    }
     $firstName = trim($_POST['first_name'] ?? '');
     $lastName = trim($_POST['last_name'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
@@ -57,10 +60,17 @@ require_once __DIR__ . '/includes/header.php';
 
 <?php foreach ($errors as $err): ?><div class="alert alert-danger"><?= e($err) ?></div><?php endforeach; ?>
 <?php if ($msg = flash('success')): ?><div class="alert alert-success"><?= e($msg) ?></div><?php endif; ?>
+<?php if (empty($user['email_verified'])): ?>
+    <?php $vtoken = generateVerifyToken((int) $user['user_id']); ?>
+    <div class="alert alert-warning">
+        Your email is not verified. <a href="<?= e(APP_URL . '/verify_email.php?token=' . urlencode($vtoken)) ?>">Verify now</a>.
+    </div>
+<?php endif; ?>
 
 <div class="card auth-card mx-0" style="max-width: 560px;">
     <div class="card-body p-4">
         <form method="post">
+            <?= csrfField() ?>
             <div class="row g-2">
                 <div class="col-md-6">
                     <label class="form-label">First Name</label>

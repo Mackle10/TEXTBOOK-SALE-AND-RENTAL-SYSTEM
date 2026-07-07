@@ -6,6 +6,11 @@ $bookId = (int) ($_GET['book_id'] ?? 0);
 $book = getBookById($bookId);
 $user = currentUser();
 
+if (!validateCsrf()) {
+    setFlash('error', 'Invalid request.');
+    redirect('books/view.php?id=' . $bookId);
+}
+
 if (!$book) {
     setFlash('error', 'Book not found.');
     redirect('books/index.php');

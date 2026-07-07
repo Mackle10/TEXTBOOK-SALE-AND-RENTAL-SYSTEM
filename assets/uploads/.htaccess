@@ -1,0 +1,5 @@
+# Deny execution of any server-side scripts uploaded into this directory
+php_flag engine off
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|cgi|pl|py|asp|aspx|sh|bat|exe)$">
+    Require all denied
+</FilesMatch>

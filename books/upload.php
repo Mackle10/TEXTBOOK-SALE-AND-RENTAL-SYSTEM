@@ -17,6 +17,9 @@ if (!$sellerId) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCsrf()) {
+        $errors[] = 'Invalid or expired form submission. Please try again.';
+    }
     $name = trim($_POST['name'] ?? '');
     $author = trim($_POST['author'] ?? '');
     $courseCode = strtoupper(trim($_POST['course_code'] ?? ''));
@@ -26,6 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $description = trim($_POST['description'] ?? '');
     $condition = trim($_POST['condition_note'] ?? 'Good');
+    $coverImage = null;
+
+    if (isset($_FILES['cover_image'])) {
+        $coverImage = handleImageUpload($_FILES['cover_image']);
+        if ($coverImage === false) {
+            $errors[] = 'Cover image must be a JPG, PNG, GIF or WebP file under 2MB.';
+        }
+    }
 
     if ($name === '' || $author === '' || $courseCode === '') {
         $errors[] = 'Name, author, and course code are required.';
@@ -42,10 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         $stmt = getDB()->prepare(
-            'INSERT INTO books (seller_id, name, author, description, condition_note, course_code, price, listing_type, rental_price_per_day, status, book_status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, \'Active\', \'available\')'
+            'INSERT INTO books (seller_id, name, author, description, condition_note, course_code, price, listing_type, rental_price_per_day, cover_image, status, book_status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'Active\', \'available\')'
         );
-        $stmt->execute([$sellerId, $name, $author, $description, $condition, $courseCode, $price, $listingType, $rentalPrice]);
+        $stmt->execute([$sellerId, $name, $author, $description, $condition, $courseCode, $price, $listingType, $rentalPrice, $coverImage]);
 
         $upd = getDB()->prepare('UPDATE sellers SET sell_price = ? WHERE seller_id = ?');
         $upd->execute([$price, $sellerId]);
@@ -67,6 +78,7 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="card auth-card mx-0" style="max-width: 600px;">
     <div class="card-body p-4">
         <form method="post">
+            <?= csrfField() ?>
             <div class="mb-3">
                 <label class="form-label">Book Title</label>
                 <input type="text" name="name" class="form-control" required value="<?= e($_POST['name'] ?? '') ?>">
@@ -96,7 +108,11 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="mb-3" id="rentalField" style="display:none;">
                 <label class="form-label">Rental Price per Day (KES)</label>
                 <input type="number" name="rental_price_per_day" class="form-control" step="0.01" min="0.01"
-                       value="<?= e($_POST['rental_price_per_day'] ?? '') ?>">
+                        value="<?= e($_POST['rental_price_per_day'] ?? '') ?>">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Cover Image (optional)</label>
+                <input type="file" name="cover_image" class="form-control" accept="image/*">
             </div>
             <button type="submit" class="btn btn-primary">Upload Book</button>
             <a href="../dashboard.php" class="btn btn-outline-secondary">Cancel</a>

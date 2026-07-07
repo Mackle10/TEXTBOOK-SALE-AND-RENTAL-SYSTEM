@@ -3,8 +3,8 @@ require_once __DIR__ . '/functions.php';
 
 $pageTitle = $pageTitle ?? APP_NAME;
 $bodyClass = $bodyClass ?? '';
-$notifCount = isLoggedIn() ? getUnreadNotificationCount($_SESSION['user_id'] ?? 0) : 0;
-$messageCount = isLoggedIn() ? getUnreadMessageCount($_SESSION['user_id'] ?? 0) : 0;
+$notifCount = isLoggedIn() ? getUnreadNotificationCount() : 0;
+$messageCount = isLoggedIn() ? getUnreadMessageCount() : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
