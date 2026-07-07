@@ -1,0 +1,83 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f4f7fb;
+}
+
+main {
+    flex: 1;
+}
+
+.hero {
+    background: linear-gradient(135deg, #0d6efd 0%, #084298 100%);
+    color: #fff;
+    border-radius: 1rem;
+    padding: 3rem 2rem;
+}
+
+.feature-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+}
+
+.book-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.125rem 0.75rem rgba(0, 0, 0, 0.08);
+    height: 100%;
+}
+
+.book-card .card-header {
+    background: #fff;
+    border-bottom: 1px solid #eef2f7;
+    font-weight: 600;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+}
+
+.qr-box {
+    background: #fff;
+    border: 2px dashed #dee2e6;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.rental-timer {
+    background: linear-gradient(90deg, #fff3cd, #ffe69c);
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+}
+
+.stat-card {
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+}
+
+.search-bar {
+    border-radius: 2rem;
+    padding-left: 1.25rem;
+}
+
+.auth-card {
+    max-width: 480px;
+    margin: 2rem auto;
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+}

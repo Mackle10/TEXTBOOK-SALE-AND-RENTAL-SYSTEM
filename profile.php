@@ -1,0 +1,105 @@
+<?php
+require_once __DIR__ . '/includes/functions.php';
+requireLogin();
+
+$user = currentUser();
+$db = getDB();
+$pageTitle = 'My Profile';
+$errors = [];
+
+$stmt = $db->prepare('SELECT * FROM students WHERE user_id = ?');
+$stmt->execute([$user['user_id']]);
+$profile = $stmt->fetch();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $firstName = trim($_POST['first_name'] ?? '');
+    $lastName = trim($_POST['last_name'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $course = trim($_POST['course'] ?? '');
+    $year = (int) ($_POST['year_of_study'] ?? 1);
+    $newPassword = $_POST['new_password'] ?? '';
+
+    if ($firstName === '' || $lastName === '') {
+        $errors[] = 'Name is required.';
+    }
+
+    if (empty($errors)) {
+        $db->prepare('UPDATE users SET phone = ? WHERE user_id = ?')->execute([$phone, $user['user_id']]);
+        $db->prepare(
+            'UPDATE students SET first_name = ?, last_name = ?, course = ?, year_of_study = ? WHERE user_id = ?'
+        )->execute([$firstName, $lastName, $course, max(1, min(5, $year)), $user['user_id']]);
+
+        if ($user['role'] === 'Seller') {
+            $db->prepare('UPDATE sellers SET phone = ?, name = ? WHERE email = ?')
+               ->execute([$phone, "$firstName $lastName", $user['email']]);
+        }
+
+        if ($newPassword !== '') {
+            if (strlen($newPassword) < 6) {
+                $errors[] = 'Password must be at least 6 characters.';
+            } else {
+                $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+                $db->prepare('UPDATE users SET password = ? WHERE user_id = ?')->execute([$hash, $user['user_id']]);
+            }
+        }
+
+        if (empty($errors)) {
+            setFlash('success', 'Profile updated successfully.');
+            redirect('profile.php');
+        }
+    }
+}
+
+require_once __DIR__ . '/includes/header.php';
+?>
+
+<h1 class="h3 mb-4">My Profile</h1>
+
+<?php foreach ($errors as $err): ?><div class="alert alert-danger"><?= e($err) ?></div><?php endforeach; ?>
+<?php if ($msg = flash('success')): ?><div class="alert alert-success"><?= e($msg) ?></div><?php endif; ?>
+
+<div class="card auth-card mx-0" style="max-width: 560px;">
+    <div class="card-body p-4">
+        <form method="post">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <label class="form-label">First Name</label>
+                    <input type="text" name="first_name" class="form-control" required value="<?= e($profile['first_name'] ?? '') ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="last_name" class="form-control" required value="<?= e($profile['last_name'] ?? '') ?>">
+                </div>
+            </div>
+            <div class="mb-3 mt-2">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" value="<?= e($user['email']) ?>" disabled>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Phone</label>
+                <input type="tel" name="phone" class="form-control" required value="<?= e($user['phone']) ?>">
+            </div>
+            <div class="row g-2">
+                <div class="col-md-8">
+                    <label class="form-label">Course / Program</label>
+                    <input type="text" name="course" class="form-control" value="<?= e($profile['course'] ?? '') ?>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Year</label>
+                    <select name="year_of_study" class="form-select">
+                        <?php for ($y = 1; $y <= 5; $y++): ?>
+                            <option value="<?= $y ?>" <?= ((int)($profile['year_of_study'] ?? 1) === $y) ? 'selected' : '' ?>>Year <?= $y ?></option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3 mt-2">
+                <label class="form-label">New Password <span class="text-muted">(leave blank to keep current)</span></label>
+                <input type="password" name="new_password" class="form-control" minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
