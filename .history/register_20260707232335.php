@@ -230,7 +230,18 @@ require_once __DIR__ . '/includes/header.php';
                     <button class="btn btn-outline-secondary btn-toggle-password" data-target="reg-confirm-password" type="button" aria-label="Show password"><i class="bi bi-eye"></i></button>
                 </div>
             </div>
-        <button type="submit" class="btn btn-primary w-100">Create Account</button>
+            <button type="submit" class="btn btn-primary w-100">Create Account</button>
+        </form>
+        <p class="text-center mt-3 mb-0 small">
+            Already registered? <a href="login.php">Login</a>
+        </p>
+        <p class="text-center mt-3 mb-0 small">
+            Already registered? <a href="login.php">Login</a>
+        </p>
+    </div>
+</div>
+
+            <button type="submit" class="btn btn-primary w-100">Create Account</button>
         </form>
         <p class="text-center mt-3 mb-0 small">
             Already registered? <a href="login.php">Login</a>

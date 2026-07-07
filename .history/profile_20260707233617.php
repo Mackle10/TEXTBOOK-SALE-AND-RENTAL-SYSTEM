@@ -95,11 +95,11 @@ require_once __DIR__ . '/includes/header.php';
             <div class="row g-2">
                 <div class="col-md-6">
                     <label class="form-label">First Name</label>
-                    <input type="text" name="first_name" class="form-control" required value="<?= e($_POST['first_name'] ?? $profile['first_name'] ?? '') ?>">
+                    <input type="text" name="first_name" class="form-control" required value="<?= e($profile['first_name'] ?? '') ?>">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Last Name</label>
-                    <input type="text" name="last_name" class="form-control" required value="<?= e($_POST['last_name'] ?? $profile['last_name'] ?? '') ?>">
+                    <input type="text" name="last_name" class="form-control" required value="<?= e($profile['last_name'] ?? '') ?>">
                 </div>
             </div>
             <div class="mb-3 mt-2">
@@ -108,7 +108,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
             <div class="mb-3">
                 <label class="form-label">Phone</label>
-                <input type="tel" name="phone" class="form-control" required value="<?= e($_POST['phone'] ?? $user['phone']) ?>">
+                <input type="tel" name="phone" class="form-control" required value="<?= e($user['phone']) ?>">
             </div>
             <div class="mb-3 mt-2">
                 <label class="form-label d-block">Education Level</label>

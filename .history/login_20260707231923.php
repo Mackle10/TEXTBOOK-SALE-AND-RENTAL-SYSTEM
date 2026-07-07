@@ -63,9 +63,9 @@ require_once __DIR__ . '/includes/header.php';
         <form method="post" novalidate>
             <?= csrfField() ?>
             <div class="mb-3">
-                <label class="form-label">Email Address</label>
+                <label class="form-label">University Email</label>
                 <input type="email" name="email" class="form-control" required
-                       placeholder="you@example.com"
+                       placeholder="you@<?= e(UNIVERSITY_EMAIL_DOMAIN) ?>"
                        value="<?= e($_POST['email'] ?? '') ?>">
             </div>
             <div class="mb-3">

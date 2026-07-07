@@ -38,7 +38,7 @@ try {
             <div class="d-flex gap-2 flex-wrap">
                 <a href="books/index.php" class="btn btn-light btn-lg">Browse by Course Code</a>
                 <?php if (!isLoggedIn()): ?>
-                    <a href="register.php" class="btn btn-outline-light btn-lg">Join the student marketplace</a>
+                    <a href="register.php" class="btn btn-outline-light btn-lg">Join with University Email</a>
                 <?php else: ?>
                     <a href="dashboard.php" class="btn btn-outline-light btn-lg">Go to Dashboard</a>
                 <?php endif; ?>

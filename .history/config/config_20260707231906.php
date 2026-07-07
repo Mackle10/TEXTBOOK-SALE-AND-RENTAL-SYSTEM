@@ -11,9 +11,8 @@ define('DB_NAME', 'textbooks');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
-// Legacy email domain constant. Registration now accepts any valid student email address.
-// Kept for backward compatibility; leave empty to disable domain-based checks.
-define('UNIVERSITY_EMAIL_DOMAIN', '');
+// Legacy email domain constant. Registration now accepts any valid email address.
+define('UNIVERSITY_EMAIL_DOMAIN', 'students.mak.ac.ug');
 
 define('RENTAL_REMINDER_DAYS', 3);
 
