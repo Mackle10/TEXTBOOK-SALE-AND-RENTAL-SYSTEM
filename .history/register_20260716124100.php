@@ -55,12 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userId = (int) $db->lastInsertId();
 
                 $stu = $db->prepare(
-                    'INSERT INTO students (user_id, course, first_name, last_name)
-                     VALUES (?, ?, ?, ?)'
+                    'INSERT INTO students (user_id, course, year_of_study, first_name, last_name)
+                     VALUES (?, ?, ?, ?, ?)'
                 );
                 $stu->execute([
                     $userId,
                     $courseValue,
+                    $yearOfStudyValue,
                     $firstName,
                     $lastName,
                 ]);

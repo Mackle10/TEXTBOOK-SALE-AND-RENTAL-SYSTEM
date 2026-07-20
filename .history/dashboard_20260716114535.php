@@ -85,8 +85,6 @@ $waitlistCount = count($waitlist);
 $myBookCount = count($myBooks);
 $sellerSummary = null;
 $sellerPendingReturns = 0;
-$sellerPerformanceLabels = [];
-$sellerPerformanceRevenue = [];
 
 if ($user['role'] === 'Seller') {
     $sellerId = getSellerIdForUser($user['user_id']);
@@ -102,23 +100,6 @@ if ($user['role'] === 'Seller') {
         $sellerSummaryStmt->execute([$sellerId]);
         $sellerSummary = $sellerSummaryStmt->fetch();
         $sellerPendingReturns = count($sellerRentals);
-
-        $sellerPerformanceStmt = $db->prepare(
-            "SELECT DATE_FORMAT(s.sale_date, '%b %Y') AS label, COALESCE(SUM(p.amount_paid), 0) AS revenue
-             FROM sales s
-             JOIN payments p ON p.sale_id = s.sale_id
-             JOIN qr_tokens qt ON qt.sale_id = s.sale_id
-             JOIN books b ON b.book_id = qt.book_id
-             WHERE b.seller_id = ? AND p.payment_status = 'Paid' AND s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-             GROUP BY label
-             ORDER BY MIN(s.sale_date) ASC"
-        );
-        $sellerPerformanceStmt->execute([$sellerId]);
-        $performanceRows = $sellerPerformanceStmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($performanceRows as $row) {
-            $sellerPerformanceLabels[] = $row['label'];
-            $sellerPerformanceRevenue[] = (float) $row['revenue'];
-        }
     }
 }
 
@@ -270,17 +251,6 @@ require_once __DIR__ . '/includes/header.php';
                     </div>
                 </div>
             </div>
-            <?php if (!empty($sellerPerformanceLabels)): ?>
-                <div class="card dashboard-section mb-4">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h2 class="h5 mb-0">Seller performance</h2>
-                            <span class="small text-muted">Last 6 months</span>
-                        </div>
-                        <canvas id="sellerPerformanceChart" height="220"></canvas>
-                    </div>
-                </div>
-            <?php endif; ?>
         <?php endif; ?>
 
         <div class="card mb-4 dashboard-section">
@@ -381,13 +351,5 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </section>
 </div>
-
-<?php if (!empty($sellerPerformanceLabels)): ?>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        window.sellerPerformanceLabels = <?= json_encode($sellerPerformanceLabels) ?>;
-        window.sellerPerformanceRevenue = <?= json_encode($sellerPerformanceRevenue) ?>;
-    </script>
-<?php endif; ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

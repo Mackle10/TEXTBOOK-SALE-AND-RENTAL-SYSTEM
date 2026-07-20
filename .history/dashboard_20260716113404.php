@@ -70,7 +70,6 @@ try {
 }
 
 $unreadNotifications = getUnreadNotificationCount($user['user_id']);
-$myRentalCount = count($rentals);
 $activeRentalCount = 0;
 $overdueRentalCount = 0;
 foreach ($rentals as $r) {
@@ -83,44 +82,6 @@ foreach ($rentals as $r) {
 }
 $waitlistCount = count($waitlist);
 $myBookCount = count($myBooks);
-$sellerSummary = null;
-$sellerPendingReturns = 0;
-$sellerPerformanceLabels = [];
-$sellerPerformanceRevenue = [];
-
-if ($user['role'] === 'Seller') {
-    $sellerId = getSellerIdForUser($user['user_id']);
-    if ($sellerId) {
-        $sellerSummaryStmt = $db->prepare(
-            "SELECT COALESCE(SUM(p.amount_paid), 0) AS earned, COUNT(DISTINCT s.sale_id) AS deals
-             FROM sales s
-             JOIN payments p ON p.sale_id = s.sale_id
-             JOIN qr_tokens qt ON qt.sale_id = s.sale_id
-             JOIN books b ON b.book_id = qt.book_id
-             WHERE b.seller_id = ? AND p.payment_status = 'Paid'"
-        );
-        $sellerSummaryStmt->execute([$sellerId]);
-        $sellerSummary = $sellerSummaryStmt->fetch();
-        $sellerPendingReturns = count($sellerRentals);
-
-        $sellerPerformanceStmt = $db->prepare(
-            "SELECT DATE_FORMAT(s.sale_date, '%b %Y') AS label, COALESCE(SUM(p.amount_paid), 0) AS revenue
-             FROM sales s
-             JOIN payments p ON p.sale_id = s.sale_id
-             JOIN qr_tokens qt ON qt.sale_id = s.sale_id
-             JOIN books b ON b.book_id = qt.book_id
-             WHERE b.seller_id = ? AND p.payment_status = 'Paid' AND s.sale_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-             GROUP BY label
-             ORDER BY MIN(s.sale_date) ASC"
-        );
-        $sellerPerformanceStmt->execute([$sellerId]);
-        $performanceRows = $sellerPerformanceStmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($performanceRows as $row) {
-            $sellerPerformanceLabels[] = $row['label'];
-            $sellerPerformanceRevenue[] = (float) $row['revenue'];
-        }
-    }
-}
 
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -208,21 +169,11 @@ require_once __DIR__ . '/includes/header.php';
             <div class="col-sm-6 col-xl-3">
                 <div class="card dashboard-metric p-4">
                     <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="text-muted small text-uppercase">My rentals</span>
-                        <i class="bi bi-calendar-check fs-4 text-info"></i>
+                        <span class="text-muted small text-uppercase">Waitlist items</span>
+                        <i class="bi bi-hourglass-split fs-4 text-warning"></i>
                     </div>
-                    <h2 class="mb-1"><?= $myRentalCount ?></h2>
-                    <p class="small text-muted mb-0">Total rentals</p>
-                </div>
-            </div>
-            <div class="col-sm-6 col-xl-3">
-                <div class="card dashboard-metric p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="text-muted small text-uppercase">My listings</span>
-                        <i class="bi bi-collection fs-4 text-success"></i>
-                    </div>
-                    <h2 class="mb-1"><?= $myBookCount ?></h2>
-                    <p class="small text-muted mb-0">Seller listings</p>
+                    <h2 class="mb-1"><?= $waitlistCount ?></h2>
+                    <p class="small text-muted mb-0">Waiting for books</p>
                 </div>
             </div>
             <div class="col-sm-6 col-xl-3">
@@ -235,53 +186,17 @@ require_once __DIR__ . '/includes/header.php';
                     <p class="small text-muted mb-0">Course codes available</p>
                 </div>
             </div>
-        </div>
-
-        <?php if ($sellerSummary): ?>
-            <div class="row g-3 mb-4">
-                <div class="col-sm-6 col-lg-4">
-                    <div class="card dashboard-metric p-4">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="text-muted small text-uppercase">Total earnings</span>
-                            <i class="bi bi-currency-dollar fs-4 text-success"></i>
-                        </div>
-                        <h2 class="mb-1">KES <?= number_format((float) $sellerSummary['earned'], 2) ?></h2>
-                        <p class="small text-muted mb-0">Earnings from paid sales</p>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card dashboard-metric p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="text-muted small text-uppercase">Notifications</span>
+                        <i class="bi bi-bell fs-4 text-danger"></i>
                     </div>
-                </div>
-                <div class="col-sm-6 col-lg-4">
-                    <div class="card dashboard-metric p-4">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="text-muted small text-uppercase">Completed deals</span>
-                            <i class="bi bi-check2-all fs-4 text-primary"></i>
-                        </div>
-                        <h2 class="mb-1"><?= (int) $sellerSummary['deals'] ?></h2>
-                        <p class="small text-muted mb-0">Paid sales completed</p>
-                    </div>
-                </div>
-                <div class="col-sm-6 col-lg-4">
-                    <div class="card dashboard-metric p-4">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="text-muted small text-uppercase">Pending returns</span>
-                            <i class="bi bi-clock-history fs-4 text-warning"></i>
-                        </div>
-                        <h2 class="mb-1"><?= $sellerPendingReturns ?></h2>
-                        <p class="small text-muted mb-0">Rentals awaiting return</p>
-                    </div>
+                    <h2 class="mb-1"><?= $unreadNotifications ?></h2>
+                    <p class="small text-muted mb-0">Unread alerts</p>
                 </div>
             </div>
-            <?php if (!empty($sellerPerformanceLabels)): ?>
-                <div class="card dashboard-section mb-4">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h2 class="h5 mb-0">Seller performance</h2>
-                            <span class="small text-muted">Last 6 months</span>
-                        </div>
-                        <canvas id="sellerPerformanceChart" height="220"></canvas>
-                    </div>
-                </div>
-            <?php endif; ?>
-        <?php endif; ?>
+        </div>
 
         <div class="card mb-4 dashboard-section">
             <div class="card-body">
@@ -381,13 +296,5 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </section>
 </div>
-
-<?php if (!empty($sellerPerformanceLabels)): ?>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        window.sellerPerformanceLabels = <?= json_encode($sellerPerformanceLabels) ?>;
-        window.sellerPerformanceRevenue = <?= json_encode($sellerPerformanceRevenue) ?>;
-    </script>
-<?php endif; ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

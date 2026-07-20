@@ -203,7 +203,7 @@ function returnRental(int $rentalId, int $requestedByUserId): bool
     $isBorrower = (int) $rental['borrower_user_id'] === $requestedByUserId;
     $isSeller = $sellerUserId === $requestedByUserId;
 
-    if (!$isBorrower && !$isSeller && !isAdmin()) {
+    if (!$isBorrower && !$isSeller && !isAdminLoggedIn()) {
         return false;
     }
 
@@ -525,4 +525,3 @@ function consumePasswordReset(string $email, string $token, string $newHash): bo
     $db->prepare('DELETE FROM password_resets WHERE email = ?')->execute([$email]);
     return true;
 }
-

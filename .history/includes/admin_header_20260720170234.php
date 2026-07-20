@@ -30,8 +30,6 @@ $pageTitle = $pageTitle ?? APP_NAME . ' Admin';
         <div class="collapse navbar-collapse" id="adminNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/admin/admin_dashboard.php">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/admin/approvals.php">Approvals</a></li>
-                <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/admin/users.php">Users</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/admin/books.php">Manage Books</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/books/index.php">Public Site</a></li>
             </ul>

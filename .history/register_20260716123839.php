@@ -43,6 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($check->fetch()) {
             $errors[] = 'An account with this email already exists.';
         } else {
+            $educationLevel = 'Undeclared';
+            $yearClass = 'Year 1';
             $courseValue = 'Undeclared';
             $yearOfStudyValue = null;
 
@@ -55,18 +57,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userId = (int) $db->lastInsertId();
 
                 $stu = $db->prepare(
-                    'INSERT INTO students (user_id, course, first_name, last_name)
-                     VALUES (?, ?, ?, ?)'
+                    'INSERT INTO students (user_id, course, year_of_study, first_name, last_name, student_category, education_level, year_class)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stu->execute([
                     $userId,
                     $courseValue,
+                    $yearOfStudyValue,
                     $firstName,
                     $lastName,
-                ]);
-
-                if ($role === 'Seller') {
-                    $name = $firstName . ' ' . $lastName;
+                        'University',
                     $sel = $db->prepare(
                         'INSERT INTO sellers (name, phone, email, sell_price, date_added) VALUES (?, ?, ?, 0, CURDATE())'
                     );
@@ -121,6 +121,54 @@ require_once __DIR__ . '/includes/header.php';
             <div class="mb-3">
                 <label class="form-label">Phone</label>
                 <input type="tel" name="phone" class="form-control" required value="<?= e($_POST['phone'] ?? '') ?>">
+            </div>
+            <div class="mb-3">
+                <label class="form-label d-block">Education Level</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="student-category-university" name="student_category" value="University" <?= (($_POST['student_category'] ?? 'University') === 'University') ? 'checked' : '' ?> >
+                    <label class="form-check-label" for="student-category-university">University Student</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="student-category-highschool" name="student_category" value="High School" <?= (($_POST['student_category'] ?? '') === 'High School') ? 'checked' : '' ?> >
+                    <label class="form-check-label" for="student-category-highschool">High School Student</label>
+                </div>
+            </div>
+            <div id="university-fields" class="<?= (($_POST['student_category'] ?? 'University') !== 'University') ? 'd-none' : '' ?>">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Course / Program</label>
+                        <input type="text" name="program" class="form-control" placeholder="e.g. Computer Science" value="<?= e($_POST['program'] ?? '') ?>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Year of Study</label>
+                        <select name="year_of_study" class="form-select">
+                            <?php for ($y = 1; $y <= 5; $y++): ?>
+                                <option value="<?= $y ?>" <?= (($_POST['year_of_study'] ?? 1) == $y) ? 'selected' : '' ?>>Year <?= $y ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div id="highschool-fields" class="<?= (($_POST['student_category'] ?? 'University') !== 'High School') ? 'd-none' : '' ?>">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">High School Level</label>
+                        <select name="high_school_level" class="form-select">
+                            <option value="">Select level</option>
+                            <option value="Ordinary Level / O-Level" <?= (($_POST['high_school_level'] ?? '') === 'Ordinary Level / O-Level') ? 'selected' : '' ?>>Ordinary Level / O-Level</option>
+                            <option value="Advanced Level / A-Level" <?= (($_POST['high_school_level'] ?? '') === 'Advanced Level / A-Level') ? 'selected' : '' ?>>Advanced Level / A-Level</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Class / Form</label>
+                        <select name="high_school_class" class="form-select">
+                            <option value="">Select class</option>
+                            <?php for ($s = 1; $s <= 6; $s++): ?>
+                                <option value="Senior <?= $s ?>" <?= (($_POST['high_school_class'] ?? '') === "Senior $s") ? 'selected' : '' ?>>Senior <?= $s ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="mb-3 mt-2">
                 <label class="form-label">I want to</label>

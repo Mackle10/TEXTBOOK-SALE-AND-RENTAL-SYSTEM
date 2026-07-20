@@ -43,6 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($check->fetch()) {
             $errors[] = 'An account with this email already exists.';
         } else {
+            $educationLevel = 'Undeclared';
+            $yearClass = 'Year 1';
             $courseValue = 'Undeclared';
             $yearOfStudyValue = null;
 
@@ -55,14 +57,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userId = (int) $db->lastInsertId();
 
                 $stu = $db->prepare(
-                    'INSERT INTO students (user_id, course, first_name, last_name)
-                     VALUES (?, ?, ?, ?)'
+                    'INSERT INTO students (user_id, course, year_of_study, first_name, last_name, student_category, education_level, year_class)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stu->execute([
                     $userId,
                     $courseValue,
+                    $yearOfStudyValue,
                     $firstName,
                     $lastName,
+                    'University',
+                    $educationLevel,
+                    $yearClass,
                 ]);
 
                 if ($role === 'Seller') {

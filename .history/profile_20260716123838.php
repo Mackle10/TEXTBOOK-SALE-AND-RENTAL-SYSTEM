@@ -11,7 +11,11 @@ $stmt = $db->prepare('SELECT * FROM students WHERE user_id = ?');
 $stmt->execute([$user['user_id']]);
 $profile = $stmt->fetch();
 
-
+$studentCategory = $_POST['student_category'] ?? ($profile['student_category'] ?? 'University');
+$program = trim($_POST['program'] ?? (((string)($profile['student_category'] ?? 'University') === 'University') ? ($profile['education_level'] ?? $profile['course'] ?? '') : ''));
+$highSchoolLevel = $_POST['high_school_level'] ?? (((string)($profile['student_category'] ?? '') === 'High School') ? ($profile['education_level'] ?? '') : '');
+$highSchoolClass = $_POST['high_school_class'] ?? (((string)($profile['student_category'] ?? '') === 'High School') ? ($profile['year_class'] ?? '') : '');
+$year = (int) ($_POST['year_of_study'] ?? ($profile['year_of_study'] ?? 1));
 $newPassword = $_POST['new_password'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
